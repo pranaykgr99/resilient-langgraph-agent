@@ -8,7 +8,7 @@ from langgraph.graph import END, START, StateGraph
 from agent.state import AgentState
 
 
-def initial(task):
+def initial(task, dataset=None, analysis=None):
     return dict(
         task=task,
         plan=[],
@@ -22,6 +22,9 @@ def initial(task):
         fallback_used=False,
         status="running",
         events=[],
+        dataset_id=dataset["id"] if dataset else "",
+        dataset_schema={k: v for k, v in (dataset or {}).items() if k != "preview"},
+        analysis_request=analysis or {},
     )
 
 
@@ -88,7 +91,10 @@ def build_graph(settings, saver, registry, brain, pause=False):
         count = s["retries"].get(key, 0) + 1
         if count > 1:
             await asyncio.sleep(min(settings.backoff_cap, settings.backoff_base * 2 ** (count - 2)))
-        result = await registry.invoke(step["tool"], step["input"])
+        if step["tool"].startswith("dataset_"):
+            result = await registry.invoke_dataset(step["tool"], step["input"], s.get("dataset_id", ""))
+        else:
+            result = await registry.invoke(step["tool"], step["input"])
         error = [] if result["ok"] else [dict(result["error"], tool=step["tool"], attempt=count)]
         return emit(
             s,
@@ -191,7 +197,7 @@ def build_graph(settings, saver, registry, brain, pause=False):
         return emit(s, config, "error_handler", "escalate", "Recovery budget exhausted")
 
     async def human_escalation(s, config):
-        attempts = "; ".join(f"{e.get('tool', 'verification')}: {e['code']}" for e in s["errors"])
+        attempts = "; ".join(f"{e.get('tool', 'verification')}: {e['code']} ({e.get('message', '')})" for e in s["errors"])
         answer = f"Could not complete the task. {s['reason']}. Tried: {attempts or 'planning/verification'}. "
         answer += "Provide a reliable source, correct the input, or restore the configured service and start a new task."
         return emit(

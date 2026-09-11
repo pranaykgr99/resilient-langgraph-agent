@@ -1,5 +1,6 @@
 import ast
 import asyncio
+import json
 import math
 import operator
 import sys
@@ -51,6 +52,19 @@ class ToolRegistry:
     def __init__(self, settings):
         self.settings = settings
         self.store = LocalVectorStore(settings.data_dir)
+
+    async def invoke_dataset(self, tool, text, dataset_id):
+        from agent.datasets import DataError, run_operation
+        try:
+            options = json.loads(text)
+            if not isinstance(options, dict) or set(options) - {"metric", "group_by", "date_column"}:
+                raise DataError("bad_input", "Dataset tools accept only metric, group_by and date_column.")
+            result = await run_operation(self.settings.data_dir, dataset_id, tool, options,
+                                         timeout=self.settings.tool_timeout)
+            return {**result, "tool": tool}
+        except Exception as exc:
+            return {"ok": False, "tool": tool, "error": {
+                "code": getattr(exc, "code", "bad_input"), "message": str(exc)[:350], "retryable": False}}
 
     async def invoke(self, tool, text):
         try:

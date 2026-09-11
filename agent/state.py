@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 
 class Step(BaseModel):
-    tool: Literal["web_search", "calculator", "python", "knowledge_base"]
+    tool: Literal["web_search", "calculator", "python", "knowledge_base", "dataset_profile", "dataset_aggregate", "dataset_trend"]
     input: str = Field(min_length=1, max_length=6000)
     goal: str = Field(min_length=1)
 
@@ -17,6 +17,13 @@ class Review(BaseModel):
     reason: str
     answer: str = ""
     accepted: bool = False
+
+
+class AnalysisRequest(BaseModel):
+    kind: Literal["profile", "aggregate", "trend", "custom"] = "profile"
+    metric: str | None = Field(default=None, max_length=100)
+    group_by: str | None = Field(default=None, max_length=100)
+    date_column: str | None = Field(default=None, max_length=100)
 
 
 class AgentState(TypedDict, total=False):
@@ -35,3 +42,6 @@ class AgentState(TypedDict, total=False):
     fallback_used: bool
     status: str
     events: list[dict]
+    dataset_id: str
+    dataset_schema: dict
+    analysis_request: dict

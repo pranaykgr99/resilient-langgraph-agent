@@ -4,6 +4,13 @@ A stateful LangGraph agent that plans tool calls, verifies evidence, retries tra
 
 ## Quick start
 
+**CSV/Excel analysis is now included.** Existing Windows users: follow
+[UPGRADE_ANALYTICS.md](UPGRADE_ANALYTICS.md). Upload a file, preview its rows,
+choose a quality report, grouped totals/averages, or monthly trend, then download
+CSV results or a JSON report with verification evidence. Built-in analyses work
+in demo mode without API keys. See [docs/analytics.md](docs/analytics.md) for
+input rules, API examples and limitations.
+
 Requirements: Docker Engine + Compose. For local Python execution: Python 3.11+ on Linux and `libseccomp2`. The Python tool fails closed on unsupported platforms; Docker supplies Linux on macOS/Windows.
 
 ```bash
@@ -12,7 +19,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Open http://localhost:8080 and enter the API token. The API and its bundled UI are also at http://localhost:8000; OpenAPI is at `/docs`. Leave the UI's API URL empty to use the same origin. The separate nginx UI service proxies to the API, avoiding CORS configuration.
+Open http://localhost:8080 and enter the API token. The API and its bundled UI are also at http://localhost:8000; OpenAPI is at `/docs`. The UI uses the same origin. The nginx UI service proxies to the API, avoiding CORS configuration.
 
 For a no-key demonstration, set `LLM_MODE=demo` in `.env`, then use one of:
 
@@ -64,7 +71,7 @@ Every node has explicit conditional routing. `AgentState` includes the original 
 
 `AsyncSqliteSaver` is LangGraph's built-in SQLite checkpointer. CLI and API share its file format. Sync durability commits graph checkpoints before the next step. Node-entry and decision events are written to `DATA_DIR/transitions.jsonl` with thread IDs and timestamps. The trace records observable decisions and concise rationales, not private chain-of-thought. Task text/results live in checkpoints; treat that directory as sensitive application data.
 
-## Four real tools
+## Tools
 
 | Tool | Implementation | Failure behavior |
 |---|---|---|
@@ -72,6 +79,9 @@ Every node has explicit conditional routing. `AgentState` includes the original 
 | Calculator | Numeric AST interpreter; operators +, -, *, /, %, **; bounded input, exponents and numeric magnitude | Rejects calls, names, complex numbers, oversized values and divide-by-zero |
 | Python | Separate interpreter; Linux seccomp syscall allowlist, CPU/memory/output limits | No filesystem opens or network syscalls; timeout kills and reaps child; fails closed if seccomp cannot load |
 | Knowledge base | 12 bundled agent-engineering documents; persisted TF-IDF vectors in local SQLite; cosine similarity | Empty query is invalid; below-threshold search returns empty evidence for reflector rejection |
+| Dataset profile | Uploaded CSV/XLSX row counts, column types, blanks and exact duplicates | Invalid formats, dimensions and formulas are rejected |
+| Dataset aggregate | Decimal sums, means and counts by an explicitly selected column | Rejects nonnumeric measures; reconciles group totals and source row counts |
+| Dataset trend | Monthly totals and change versus the previous observed month | Requires ISO dates; zero baselines produce null change |
 
 The KB uses **lexical TF-IDF embeddings**, not a downloaded neural model. That makes startup small and offline, but synonym matching is limited. Documents, vocabulary, and vectors are versioned by a content fingerprint; document changes rebuild the local index. No external vector service is required.
 
