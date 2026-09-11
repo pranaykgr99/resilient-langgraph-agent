@@ -1,0 +1,34 @@
+=== NORMAL TASK (offline planner, real calculator) ===
+TASK_ID=normal
+planner -> execute: Planned 1 step(s)
+tool_executor -> reflect: calculator attempt 1: ok
+reflector -> finish: Requested computation or evidence returned
+135.0
+=== FORCED SEARCH FAILURE (real fallback retrieval) ===
+planner -> execute: Planned 1 step(s)
+tool_executor -> error: web_search attempt 1: rate_limit
+error_handler -> retry: Transient failure; bounded exponential backoff
+tool_executor -> error: web_search attempt 2: rate_limit
+error_handler -> retry: Transient failure; bounded exponential backoff
+tool_executor -> error: web_search attempt 3: rate_limit
+error_handler -> fallback: Search unavailable; try local evidence
+tool_executor -> reflect: knowledge_base attempt 1: ok
+reflector -> finish: Requested computation or evidence returned
+[retries] Exponential backoff delays retries by base times two to the attempt number. Cap delays and attempts to avoid endless loops.
+=== KILL AND RESUME ===
+tool_executor entered; planner checkpoint committed; blocking tool
+Killed worker while tool running: returncode=-9
+TASK_ID=crash-proof
+RESUME saved_events=1 next=('tool_executor',)
+tool_executor -> reflect: calculator attempt 1: ok
+reflector -> finish: Requested computation or evidence returned
+56
+PASS: saved plan reused; resumed answer = 56
+
+--- stderr ---
+/root/.local/lib/python3.12/site-packages/langgraph/cache/base/__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+/root/.local/lib/python3.12/site-packages/langgraph/cache/base/__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+/root/.local/lib/python3.12/site-packages/langgraph/cache/base/__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer

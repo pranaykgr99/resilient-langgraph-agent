@@ -1,0 +1,19 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Resilient Agent</title><style>
+body{font:16px system-ui;background:#101a29;color:#e1eaf4;max-width:900px;margin:40px auto;padding:20px}h1{color:#79dacb}textarea,input{box-sizing:border-box;width:100%;padding:12px;background:#1d2c40;color:white;border:1px solid #53647b;border-radius:6px;margin:6px 0}button{padding:12px 20px;background:#79dacb;border:0;border-radius:6px;cursor:pointer;margin:8px 4px 8px 0}pre{white-space:pre-wrap;background:#1d2c40;padding:18px;overflow-wrap:anywhere}label{display:block}#status{color:#79dacb}
+</style><h1>Resilient Agent</h1><p>Plan. Execute. Verify. Recover.</p>
+<label>API URL (empty uses this origin)<input id="api" placeholder="http://localhost:8000"></label>
+<label>API token<input id="token" type="password" autocomplete="off"></label>
+<label>Task<textarea id="task" rows="3" placeholder="Calculate 125 * 1.08, or ask a question about agent engineering"></textarea></label>
+<button id="start">Run task</button><button id="pause">Plan and pause</button>
+<label>Task ID<input id="thread" placeholder="Paste a saved ID to reconnect"></label>
+<button id="watch">Watch</button><button id="resume">Resume</button>
+<p id="status" role="status"></p><h2>Plan</h2><pre id="plan">Your plan will appear here.</pre>
+<h2>Progress</h2><pre id="events" aria-live="polite"></pre><h2>Answer</h2><pre id="answer"></pre>
+<script>
+const el=id=>document.getElementById(id);let timer;
+async function request(path,body){const r=await fetch(el('api').value.replace(/\/$/,'')+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','Authorization':'Bearer '+el('token').value},body:body?JSON.stringify(body):undefined});if(!r.ok)throw Error(await r.text());return r.json()}
+async function poll(){clearTimeout(timer);try{const d=await request('/tasks/'+el('thread').value);el('status').textContent=d.status;el('plan').textContent=d.plan.map((s,i)=>`${i+1}. ${s.tool}: ${s.goal}`).join('\n');el('events').textContent=d.events.map(e=>`${e.node} → ${e.decision}: ${e.reason}`).join('\n');el('answer').textContent=d.final_answer;if(d.status==='running')timer=setTimeout(poll,500)}catch(e){el('status').textContent=e.message}}
+async function start(pause){try{const d=await request('/tasks',{task:el('task').value,pause_after_plan:pause});el('thread').value=d.id;localStorage.setItem('agent-thread',d.id);poll()}catch(e){el('status').textContent=e.message}}
+el('start').onclick=()=>start(false);el('pause').onclick=()=>start(true);el('watch').onclick=poll;el('resume').onclick=async()=>{try{await request('/tasks/'+el('thread').value+'/resume',{});poll()}catch(e){el('status').textContent=e.message}};el('thread').value=localStorage.getItem('agent-thread')||'';
+</script></html>

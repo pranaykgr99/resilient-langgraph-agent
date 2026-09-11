@@ -1,0 +1,50 @@
+[
+  {
+    "id": "retries",
+    "text": "Exponential backoff delays retries by base times two to the attempt number. Cap delays and attempts to avoid endless loops."
+  },
+  {
+    "id": "checkpoints",
+    "text": "LangGraph checkpoints persist graph state per thread. Resume an interrupted thread with the same thread identifier."
+  },
+  {
+    "id": "idempotency",
+    "text": "Tools can execute again after a crash before checkpoint commit. Use idempotency keys for external writes."
+  },
+  {
+    "id": "timeouts",
+    "text": "Every tool needs a deadline. Cancel asynchronous I/O and kill computation subprocesses on timeout."
+  },
+  {
+    "id": "fallbacks",
+    "text": "A fallback uses an alternate source or capability. Local knowledge cannot establish current web facts."
+  },
+  {
+    "id": "reflection",
+    "text": "Reflection checks relevance and completeness of evidence, not merely successful tool execution."
+  },
+  {
+    "id": "escalation",
+    "text": "Escalation honestly reports incomplete work, failed approaches, and the help needed to continue."
+  },
+  {
+    "id": "sandbox",
+    "text": "The Python sandbox uses Linux seccomp to deny filesystem opens and networking, with CPU and memory limits."
+  },
+  {
+    "id": "vectors",
+    "text": "TF-IDF represents documents as sparse lexical vectors. Cosine similarity ranks query matches without a paid embedding API."
+  },
+  {
+    "id": "sqlite",
+    "text": "SQLite stores checkpoints on local disk. A persistent volume is required to survive container replacement."
+  },
+  {
+    "id": "observability",
+    "text": "Structured event logs record node names, routing decisions, and concise reasons. They do not expose private model reasoning."
+  },
+  {
+    "id": "planning",
+    "text": "A plan is a bounded ordered sequence of tool calls. Replanning preserves completed evidence and replaces remaining work."
+  }
+]

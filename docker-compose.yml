@@ -1,0 +1,25 @@
+services:
+  api:
+    build: .
+    env_file: .env
+    ports: ["8000:8000"]
+    volumes: ["agent-data:/app/data"]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    pids_limit: 64
+    mem_limit: 768m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+  ui:
+    image: nginx:1.28.0-alpine
+    volumes: ["./ui/nginx.conf:/etc/nginx/conf.d/default.conf:ro"]
+    ports: ["8080:80"]
+    depends_on:
+      api:
+        condition: service_healthy
+volumes:
+  agent-data:
