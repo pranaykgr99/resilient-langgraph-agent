@@ -13,5 +13,6 @@ jobs:
       - run: pip install -r requirements.txt
       - run: ruff check .
       - run: pytest -q
-      - run: docker compose --env-file .env.example config --quiet
+      - run: cp .env.example .env
+      - run: docker compose config --quiet
       - run: docker build -t resilient-agent .
